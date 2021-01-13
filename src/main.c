@@ -2,12 +2,14 @@
 #include <libopencm3/stm32/rcc.h>
 
 #include "clock.h"
+#include "ht1621.h"
 #include "led.h"
 
 static void init (void)
 {
 	clock_init();
 	led_init();
+	ht1621_init();
 }
 
 static void loop (void)
