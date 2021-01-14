@@ -4,11 +4,13 @@
 #include "clock.h"
 #include "ht1621.h"
 #include "led.h"
+#include "rotary.h"
 
 static void init (void)
 {
 	clock_init();
 	led_init();
+	rotary_init();
 	ht1621_init();
 }
 

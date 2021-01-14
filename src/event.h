@@ -3,6 +3,9 @@
 #include <stdbool.h>
 
 enum Event {
+	EVENT_ROTARY_CCW,
+	EVENT_ROTARY_CW,
+
 	EVENT_count
 };
 

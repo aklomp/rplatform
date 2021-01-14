@@ -8,6 +8,7 @@ static const uint32_t map_clock[] = {
 	RCC_GPIOA,
 	RCC_GPIOB,
 	RCC_SPI1,
+	RCC_TIM2,
 	RCC_TIM3,
 	RCC_TIM4,
 };
@@ -15,6 +16,7 @@ static const uint32_t map_clock[] = {
 static const uint32_t map_reset[] = {
 	RST_AFIO,
 	RST_SPI1,
+	RST_TIM2,
 	RST_TIM3,
 	RST_TIM4,
 };
