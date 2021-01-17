@@ -5,12 +5,14 @@
 #include "ht1621.h"
 #include "led.h"
 #include "rotary.h"
+#include "switch.h"
 
 static void init (void)
 {
 	clock_init();
 	led_init();
 	rotary_init();
+	switch_init();
 	ht1621_init();
 }
 
