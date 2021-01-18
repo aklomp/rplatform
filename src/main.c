@@ -2,6 +2,7 @@
 #include <libopencm3/stm32/rcc.h>
 
 #include "clock.h"
+#include "drv8833.h"
 #include "ht1621.h"
 #include "led.h"
 #include "rotary.h"
@@ -14,6 +15,7 @@ static void init (void)
 	rotary_init();
 	switch_init();
 	ht1621_init();
+	drv8833_init();
 }
 
 static void loop (void)
