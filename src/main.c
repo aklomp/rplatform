@@ -12,6 +12,7 @@
 #include "led.h"
 #include "rotary.h"
 #include "switch.h"
+#include "onewire.h"
 
 static void init (void)
 {
@@ -22,6 +23,7 @@ static void init (void)
 	switch_init();
 	ht1621_init();
 	drv8833_init();
+	onewire_init();
 
 	display_update();
 }
