@@ -83,6 +83,14 @@ static const uint8_t flash_msg[][6] = {
 		DISPLAY_CHAR_E,
 		DISPLAY_CHAR_EMPTY
 	},
+	[DISPLAY_FLASH_SENSOR] = {
+		DISPLAY_CHAR_S,
+		DISPLAY_CHAR_E,
+		DISPLAY_CHAR_N,
+		DISPLAY_CHAR_S,
+		DISPLAY_CHAR_O,
+		DISPLAY_CHAR_R,
+	},
 };
 
 // Display mode.

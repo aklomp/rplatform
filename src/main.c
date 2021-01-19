@@ -5,6 +5,7 @@
 #include "anim_rotate.h"
 #include "clock.h"
 #include "display.h"
+#include "ds18b20.h"
 #include "event.h"
 #include "drv8833.h"
 #include "event.h"
@@ -71,6 +72,15 @@ static void loop (void)
 			drv8833_speed_add(coarse ? 10 : 1);
 			display_update();
 		}
+
+		if (event_test_and_clear(EVENT_TEMPERATURE_REQUEST))
+			ds18b20_request_start();
+
+		if (event_test_and_clear(EVENT_TEMPERATURE_RESPONSE))
+			ds18b20_response_start();
+
+		// Allow the DS18B20 module to handle internal OneWire events.
+		ds18b20_handle_events();
 
 		// Wait for the next event. This loop is safe against race
 		// conditions from multiple simultaneous events, because unlike

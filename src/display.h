@@ -50,6 +50,7 @@ enum DisplayFlash {
 	DISPLAY_FLASH_COARSE,
 	DISPLAY_FLASH_FAULT,
 	DISPLAY_FLASH_FINE,
+	DISPLAY_FLASH_SENSOR,
 };
 
 extern void display_flash  (const enum DisplayFlash msg);
