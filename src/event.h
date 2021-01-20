@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 enum Event {
+	EVENT_BLINK_DONE,
 	EVENT_FAULT_END,
 	EVENT_FAULT_START,
 	EVENT_LEFT_SWITCH_DOWN,
