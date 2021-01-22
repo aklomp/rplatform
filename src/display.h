@@ -34,6 +34,7 @@ enum DisplayChar {
 	DISPLAY_CHAR_S,
 	DISPLAY_CHAR_T,
 	DISPLAY_CHAR_U,
+	DISPLAY_CHAR_DEGREE,
 	DISPLAY_CHAR_EMPTY,
 	DISPLAY_CHAR_MINUS,
 	DISPLAY_CHAR_SA,
@@ -55,3 +56,4 @@ extern void display_flash  (const enum DisplayFlash msg);
 extern void display_update (void);
 extern void display_step   (void);
 extern void display_init   (void);
+extern void display_temperature (const int16_t temp);

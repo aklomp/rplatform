@@ -23,37 +23,38 @@ enum Segment {
 
 // Device bitmaps for characters.
 static const uint8_t chars[] = {
-	[DISPLAY_CHAR_0]     = SA | SB | SC | SD | SE | SF     ,
-	[DISPLAY_CHAR_1]     =      SB | SC                    ,
-	[DISPLAY_CHAR_2]     = SA | SB |      SD | SE |      SG,
-	[DISPLAY_CHAR_3]     = SA | SB | SC | SD |           SG,
-	[DISPLAY_CHAR_4]     =      SB | SC |           SF | SG,
-	[DISPLAY_CHAR_5]     = SA |      SC | SD |      SF | SG,
-	[DISPLAY_CHAR_6]     = SA |      SC | SD | SE | SF | SG,
-	[DISPLAY_CHAR_7]     = SA | SB | SC                    ,
-	[DISPLAY_CHAR_8]     = SA | SB | SC | SD | SE | SF | SG,
-	[DISPLAY_CHAR_9]     = SA | SB | SC | SD |      SF | SG,
-	[DISPLAY_CHAR_A]     = SA | SB | SC |      SE | SF | SG,
-	[DISPLAY_CHAR_C]     = SA |           SD | SE | SF     ,
-	[DISPLAY_CHAR_E]     = SA |           SD | SE | SF | SG,
-	[DISPLAY_CHAR_F]     = SA |                SE | SF | SG,
-	[DISPLAY_CHAR_I]     =      SB | SC                    ,
-	[DISPLAY_CHAR_L]     =                SD | SE | SF     ,
-	[DISPLAY_CHAR_N]     = SA | SB | SC |      SE | SF     ,
-	[DISPLAY_CHAR_O]     = SA | SB | SC | SD | SE | SF     ,
-	[DISPLAY_CHAR_R]     = SA |                SE | SF     ,
-	[DISPLAY_CHAR_S]     = SA |      SC | SD |      SF | SG,
-	[DISPLAY_CHAR_T]     =                SD | SE | SF | SG,
-	[DISPLAY_CHAR_U]     =      SB | SC | SD | SE | SF     ,
-	[DISPLAY_CHAR_EMPTY] =                                0,
-	[DISPLAY_CHAR_MINUS] =                               SG,
-	[DISPLAY_CHAR_SA]    = SA                              ,
-	[DISPLAY_CHAR_SB]    =      SB                         ,
-	[DISPLAY_CHAR_SC]    =           SC                    ,
-	[DISPLAY_CHAR_SD]    =                SD               ,
-	[DISPLAY_CHAR_SE]    =                     SE          ,
-	[DISPLAY_CHAR_SF]    =                          SF     ,
-	[DISPLAY_CHAR_SG]    =                               SG,
+	[DISPLAY_CHAR_0]      = SA | SB | SC | SD | SE | SF     ,
+	[DISPLAY_CHAR_1]      =      SB | SC                    ,
+	[DISPLAY_CHAR_2]      = SA | SB |      SD | SE |      SG,
+	[DISPLAY_CHAR_3]      = SA | SB | SC | SD |           SG,
+	[DISPLAY_CHAR_4]      =      SB | SC |           SF | SG,
+	[DISPLAY_CHAR_5]      = SA |      SC | SD |      SF | SG,
+	[DISPLAY_CHAR_6]      = SA |      SC | SD | SE | SF | SG,
+	[DISPLAY_CHAR_7]      = SA | SB | SC                    ,
+	[DISPLAY_CHAR_8]      = SA | SB | SC | SD | SE | SF | SG,
+	[DISPLAY_CHAR_9]      = SA | SB | SC | SD |      SF | SG,
+	[DISPLAY_CHAR_A]      = SA | SB | SC |      SE | SF | SG,
+	[DISPLAY_CHAR_C]      = SA |           SD | SE | SF     ,
+	[DISPLAY_CHAR_E]      = SA |           SD | SE | SF | SG,
+	[DISPLAY_CHAR_F]      = SA |                SE | SF | SG,
+	[DISPLAY_CHAR_I]      =      SB | SC                    ,
+	[DISPLAY_CHAR_L]      =                SD | SE | SF     ,
+	[DISPLAY_CHAR_N]      = SA | SB | SC |      SE | SF     ,
+	[DISPLAY_CHAR_O]      = SA | SB | SC | SD | SE | SF     ,
+	[DISPLAY_CHAR_R]      = SA |                SE | SF     ,
+	[DISPLAY_CHAR_S]      = SA |      SC | SD |      SF | SG,
+	[DISPLAY_CHAR_T]      =                SD | SE | SF | SG,
+	[DISPLAY_CHAR_U]      =      SB | SC | SD | SE | SF     ,
+	[DISPLAY_CHAR_DEGREE] = SA | SB |                SF | SG,
+	[DISPLAY_CHAR_EMPTY]  =                                0,
+	[DISPLAY_CHAR_MINUS]  =                               SG,
+	[DISPLAY_CHAR_SA]     = SA                              ,
+	[DISPLAY_CHAR_SB]     =      SB                         ,
+	[DISPLAY_CHAR_SC]     =           SC                    ,
+	[DISPLAY_CHAR_SD]     =                SD               ,
+	[DISPLAY_CHAR_SE]     =                     SE          ,
+	[DISPLAY_CHAR_SF]     =                          SF     ,
+	[DISPLAY_CHAR_SG]     =                               SG,
 };
 
 // Flash messages.
@@ -98,6 +99,9 @@ static struct {
 
 // Step counter, counts steps per mode.
 static uint8_t step;
+
+// Extra flags to enable during a flash message.
+static uint8_t flash_flags;
 
 void sys_tick_handler (void)
 {
@@ -147,7 +151,7 @@ static void redraw_normal (void)
 
 static void redraw_flash (void)
 {
-	draw_chars(digit.flash, anim_engaged);
+	draw_chars(digit.flash, anim_engaged | flash_flags);
 }
 
 static void display_normal (void)
@@ -163,6 +167,7 @@ void display_flash (const enum DisplayFlash msg)
 	// Go into Flash mode.
 	mode = MODE_FLASH;
 	step = 0;
+	flash_flags = 0;
 	memcpy(digit.flash, flash_msg[msg], sizeof (digit.flash));
 	redraw_flash();
 }
@@ -221,4 +226,27 @@ void display_init (void)
 	// Setup the interrupt to trigger an event when the SysTick crosses
 	// through zero.
 	nvic_enable_irq(NVIC_SYSTICK_IRQ);
+}
+
+void display_temperature (const int16_t temp)
+{
+	const uint8_t utemp = temp < 0 ? -temp / 16 : temp / 16;
+	const uint8_t frac  = temp < 0 ? -temp % 16 : temp % 16;
+
+	digit.flash[0] = (utemp / 10) % 10;
+	digit.flash[1] = (utemp /  1) % 10;
+	digit.flash[2] = (frac * 100 / 16 / 10) % 10;
+	digit.flash[3] = (frac * 100 / 16 /  1) % 10;
+	digit.flash[4] = DISPLAY_CHAR_DEGREE;
+	digit.flash[5] = DISPLAY_CHAR_C;
+
+	// Replace the first digit with the sign, if the digit is unused.
+	if (digit.flash[0] == 0)
+		digit.flash[0] = temp < 0 ? DISPLAY_CHAR_MINUS : DISPLAY_CHAR_EMPTY;
+
+	// Go into Flash mode.
+	mode = MODE_FLASH;
+	step = 0;
+	flash_flags = DISPLAY_FLAG_COLON;
+	redraw_flash();
 }
