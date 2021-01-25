@@ -1,5 +1,11 @@
+#include <string.h>
+
+#include <libopencm3/cm3/nvic.h>
+#include <libopencm3/cm3/systick.h>
+
 #include "display.h"
 #include "drv8833.h"
+#include "event.h"
 #include "ht1621.h"
 
 // Device bitmaps for segments.
@@ -25,9 +31,69 @@ static const uint8_t chars[] = {
 	[DISPLAY_CHAR_7]     = SA | SB | SC                    ,
 	[DISPLAY_CHAR_8]     = SA | SB | SC | SD | SE | SF | SG,
 	[DISPLAY_CHAR_9]     = SA | SB | SC | SD |      SF | SG,
+	[DISPLAY_CHAR_A]     = SA | SB | SC |      SE | SF | SG,
+	[DISPLAY_CHAR_C]     = SA |           SD | SE | SF     ,
+	[DISPLAY_CHAR_E]     = SA |           SD | SE | SF | SG,
+	[DISPLAY_CHAR_F]     = SA |                SE | SF | SG,
+	[DISPLAY_CHAR_I]     =      SB | SC                    ,
+	[DISPLAY_CHAR_L]     =                SD | SE | SF     ,
+	[DISPLAY_CHAR_N]     = SA | SB | SC |      SE | SF     ,
+	[DISPLAY_CHAR_O]     = SA | SB | SC | SD | SE | SF     ,
+	[DISPLAY_CHAR_R]     = SA |                SE | SF     ,
+	[DISPLAY_CHAR_S]     = SA |      SC | SD |      SF | SG,
+	[DISPLAY_CHAR_T]     =                SD | SE | SF | SG,
+	[DISPLAY_CHAR_U]     =      SB | SC | SD | SE | SF     ,
 	[DISPLAY_CHAR_EMPTY] =                                0,
 	[DISPLAY_CHAR_MINUS] =                               SG,
 };
+
+// Flash messages.
+static const uint8_t flash_msg[][6] = {
+	[DISPLAY_FLASH_COARSE] = {
+		DISPLAY_CHAR_C,
+		DISPLAY_CHAR_O,
+		DISPLAY_CHAR_A,
+		DISPLAY_CHAR_R,
+		DISPLAY_CHAR_S,
+		DISPLAY_CHAR_E
+	},
+	[DISPLAY_FLASH_FAULT] = {
+		DISPLAY_CHAR_F,
+		DISPLAY_CHAR_A,
+		DISPLAY_CHAR_U,
+		DISPLAY_CHAR_L,
+		DISPLAY_CHAR_T,
+		DISPLAY_CHAR_EMPTY
+	},
+	[DISPLAY_FLASH_FINE] = {
+		DISPLAY_CHAR_EMPTY,
+		DISPLAY_CHAR_F,
+		DISPLAY_CHAR_I,
+		DISPLAY_CHAR_N,
+		DISPLAY_CHAR_E,
+		DISPLAY_CHAR_EMPTY
+	},
+};
+
+// Display mode.
+static enum {
+	MODE_FLASH,
+	MODE_NORMAL,
+} mode = MODE_NORMAL;
+
+// Normal and Flash display buffers, consisting of character codes.
+static struct {
+	uint8_t flash[6];
+	uint8_t normal[6];
+} digit;
+
+// Step counter, counts steps per mode.
+static uint8_t step;
+
+void sys_tick_handler (void)
+{
+	event_raise(EVENT_DISPLAY_STEP);
+}
 
 static void draw_chars (const uint8_t *buf, const uint8_t flags)
 {
@@ -64,27 +130,81 @@ static void draw_chars (const uint8_t *buf, const uint8_t flags)
 	ht1621_draw(bitmap);
 }
 
+static void redraw_normal (void)
+{
+	draw_chars(digit.normal, 0);
+}
+
+static void redraw_flash (void)
+{
+	draw_chars(digit.flash, 0);
+}
+
+static void display_normal (void)
+{
+	// Go into Normal mode.
+	mode = MODE_NORMAL;
+	step = 0;
+	redraw_normal();
+}
+
+void display_flash (const enum DisplayFlash msg)
+{
+	// Go into Flash mode.
+	mode = MODE_FLASH;
+	step = 0;
+	memcpy(digit.flash, flash_msg[msg], sizeof (digit.flash));
+	redraw_flash();
+}
+
 void display_update (void)
 {
-	int16_t speed   = drv8833_speed_get();
-	uint8_t uspeed  = speed < 0 ? -speed : speed;
-	uint8_t digit[] = {
-		[0] = 0,			// Intentional leading zero
-		[1] = 0,			// Intentional leading zero
-		[2] = (uspeed / 100) % 10,	// Hundreds
-		[3] = (uspeed /  10) % 10,	// Tens
-		[4] = (uspeed /   1) % 10,	// Ones
-		[5] = DISPLAY_CHAR_EMPTY,	// Right-padding
-	};
+	int16_t speed  = drv8833_speed_get();
+	uint8_t uspeed = speed < 0 ? -speed : speed;
+
+	digit.normal[1] = 0;			// Intentional leading zero
+	digit.normal[2] = (uspeed / 100) % 10;	// Hundreds
+	digit.normal[3] = (uspeed /  10) % 10;	// Tens
+	digit.normal[4] = (uspeed /   1) % 10;	// Ones
+	digit.normal[5] = DISPLAY_CHAR_EMPTY;	// Right-padding
 
 	// Replace leading zeroes with the sign.
-	for (uint32_t i = 0; i < sizeof (digit) - 2; i++) {
-		if (digit[i + 1] != 0) {
-			digit[i] = speed < 0 ? DISPLAY_CHAR_MINUS : DISPLAY_CHAR_EMPTY;
+	for (uint32_t i = 0; i < sizeof (digit.normal) - 2; i++) {
+		if (digit.normal[i + 1] != 0) {
+			digit.normal[i] = speed < 0 ? DISPLAY_CHAR_MINUS : DISPLAY_CHAR_EMPTY;
 			break;
 		}
-		digit[i] = DISPLAY_CHAR_EMPTY;
+		digit.normal[i] = DISPLAY_CHAR_EMPTY;
 	}
 
-	draw_chars(digit, 0);
+	// Go into Normal mode.
+	display_normal();
+}
+
+void display_step (void)
+{
+	if (mode == MODE_NORMAL) {
+		redraw_normal();
+		return;
+	}
+
+	// Exit Flash mode after a set number of steps.
+	++step < 10 ? redraw_flash() : display_normal();
+}
+
+void display_init (void)
+{
+	// Setup the SysTick timer to tick at 10 Hz. This provides the timing
+	// for animation frames.
+	STK_CSR = 0;
+	STK_CVR = STK_RVR = 900000 - 1;		// 10 Hz @ 9 MHz
+	STK_CSR
+		= STK_CSR_CLKSOURCE_AHB_DIV8	// 9 MHz
+		| STK_CSR_TICKINT		// Enable interrupt
+		| STK_CSR_ENABLE
+		;
+
+	// Setup the interrupt to trigger an event when the SysTick crosses
+	// through zero.
+	nvic_enable_irq(NVIC_SYSTICK_IRQ);
 }

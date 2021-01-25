@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 enum DisplayFlag {
 	DISPLAY_FLAG_COLON = 1 << 0,
 	DISPLAY_FLAG_DOT   = 1 << 1,
@@ -20,8 +22,29 @@ enum DisplayChar {
 	DISPLAY_CHAR_7,
 	DISPLAY_CHAR_8,
 	DISPLAY_CHAR_9,
+	DISPLAY_CHAR_A,
+	DISPLAY_CHAR_C,
+	DISPLAY_CHAR_E,
+	DISPLAY_CHAR_F,
+	DISPLAY_CHAR_I,
+	DISPLAY_CHAR_L,
+	DISPLAY_CHAR_N,
+	DISPLAY_CHAR_O,
+	DISPLAY_CHAR_R,
+	DISPLAY_CHAR_S,
+	DISPLAY_CHAR_T,
+	DISPLAY_CHAR_U,
 	DISPLAY_CHAR_EMPTY,
 	DISPLAY_CHAR_MINUS,
 };
 
+enum DisplayFlash {
+	DISPLAY_FLASH_COARSE,
+	DISPLAY_FLASH_FAULT,
+	DISPLAY_FLASH_FINE,
+};
+
+extern void display_flash  (const enum DisplayFlash msg);
 extern void display_update (void);
+extern void display_step   (void);
+extern void display_init   (void);
