@@ -1,4 +1,5 @@
 #include "display.h"
+#include "drv8833.h"
 #include "ht1621.h"
 
 // Device bitmaps for segments.
@@ -63,8 +64,9 @@ static void draw_chars (const uint8_t *buf, const uint8_t flags)
 	ht1621_draw(bitmap);
 }
 
-void display_speed (const int16_t speed)
+void display_update (void)
 {
+	int16_t speed   = drv8833_speed_get();
 	uint8_t uspeed  = speed < 0 ? -speed : speed;
 	uint8_t digit[] = {
 		[0] = 0,			// Intentional leading zero

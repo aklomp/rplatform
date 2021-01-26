@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-
 enum DisplayFlag {
 	DISPLAY_FLAG_COLON = 1 << 0,
 	DISPLAY_FLAG_DOT   = 1 << 1,
@@ -26,4 +24,4 @@ enum DisplayChar {
 	DISPLAY_CHAR_MINUS,
 };
 
-extern void display_speed (const int16_t speed);
+extern void display_update (void);
