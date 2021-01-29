@@ -3,6 +3,7 @@
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/cm3/systick.h>
 
+#include "anim_engaged.h"
 #include "display.h"
 #include "drv8833.h"
 #include "event.h"
@@ -132,12 +133,12 @@ static void draw_chars (const uint8_t *buf, const uint8_t flags)
 
 static void redraw_normal (void)
 {
-	draw_chars(digit.normal, 0);
+	draw_chars(digit.normal, anim_engaged);
 }
 
 static void redraw_flash (void)
 {
-	draw_chars(digit.flash, 0);
+	draw_chars(digit.flash, anim_engaged);
 }
 
 static void display_normal (void)
@@ -183,6 +184,9 @@ void display_update (void)
 
 void display_step (void)
 {
+	// Step the animations.
+	anim_engaged_step();
+
 	if (mode == MODE_NORMAL) {
 		redraw_normal();
 		return;

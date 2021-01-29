@@ -1,6 +1,7 @@
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
 
+#include "anim_engaged.h"
 #include "clock.h"
 #include "display.h"
 #include "event.h"
@@ -46,11 +47,15 @@ static void loop (void)
 				? display_flash(DISPLAY_FLASH_COARSE)
 				: display_flash(DISPLAY_FLASH_FINE);
 
-		if (event_test_and_clear(EVENT_RIGHT_SWITCH_DOWN))
+		if (event_test_and_clear(EVENT_RIGHT_SWITCH_DOWN)) {
 			drv8833_run();
+			anim_engaged_on();
+		}
 
-		if (event_test_and_clear(EVENT_RIGHT_SWITCH_UP))
+		if (event_test_and_clear(EVENT_RIGHT_SWITCH_UP)) {
 			drv8833_pause();
+			anim_engaged_off();
+		}
 
 		if (event_test_and_clear(EVENT_ROTARY_CCW)) {
 			drv8833_speed_add(coarse ? -10 : -1);
