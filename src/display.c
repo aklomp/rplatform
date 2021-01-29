@@ -4,6 +4,7 @@
 #include <libopencm3/cm3/systick.h>
 
 #include "anim_engaged.h"
+#include "anim_rotate.h"
 #include "display.h"
 #include "drv8833.h"
 #include "event.h"
@@ -46,6 +47,13 @@ static const uint8_t chars[] = {
 	[DISPLAY_CHAR_U]     =      SB | SC | SD | SE | SF     ,
 	[DISPLAY_CHAR_EMPTY] =                                0,
 	[DISPLAY_CHAR_MINUS] =                               SG,
+	[DISPLAY_CHAR_SA]    = SA                              ,
+	[DISPLAY_CHAR_SB]    =      SB                         ,
+	[DISPLAY_CHAR_SC]    =           SC                    ,
+	[DISPLAY_CHAR_SD]    =                SD               ,
+	[DISPLAY_CHAR_SE]    =                     SE          ,
+	[DISPLAY_CHAR_SF]    =                          SF     ,
+	[DISPLAY_CHAR_SG]    =                               SG,
 };
 
 // Flash messages.
@@ -133,6 +141,7 @@ static void draw_chars (const uint8_t *buf, const uint8_t flags)
 
 static void redraw_normal (void)
 {
+	digit.normal[0] = anim_rotate;
 	draw_chars(digit.normal, anim_engaged);
 }
 
@@ -170,7 +179,7 @@ void display_update (void)
 	digit.normal[5] = DISPLAY_CHAR_EMPTY;	// Right-padding
 
 	// Replace leading zeroes with the sign.
-	for (uint32_t i = 0; i < sizeof (digit.normal) - 2; i++) {
+	for (uint32_t i = 1; i < sizeof (digit.normal) - 2; i++) {
 		if (digit.normal[i + 1] != 0) {
 			digit.normal[i] = speed < 0 ? DISPLAY_CHAR_MINUS : DISPLAY_CHAR_EMPTY;
 			break;
@@ -186,6 +195,7 @@ void display_step (void)
 {
 	// Step the animations.
 	anim_engaged_step();
+	anim_rotate_step();
 
 	if (mode == MODE_NORMAL) {
 		redraw_normal();

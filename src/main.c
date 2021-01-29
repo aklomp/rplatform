@@ -2,6 +2,7 @@
 #include <libopencm3/stm32/rcc.h>
 
 #include "anim_engaged.h"
+#include "anim_rotate.h"
 #include "clock.h"
 #include "display.h"
 #include "event.h"
@@ -42,10 +43,12 @@ static void loop (void)
 			display_flash(DISPLAY_FLASH_FAULT);
 		}
 
-		if (event_test_and_clear(EVENT_LEFT_SWITCH_DOWN))
+		if (event_test_and_clear(EVENT_LEFT_SWITCH_DOWN)) {
 			(coarse = !coarse)
 				? display_flash(DISPLAY_FLASH_COARSE)
 				: display_flash(DISPLAY_FLASH_FINE);
+			anim_rotate_set_coarse(coarse);
+		}
 
 		if (event_test_and_clear(EVENT_RIGHT_SWITCH_DOWN)) {
 			drv8833_run();
