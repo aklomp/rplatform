@@ -202,13 +202,26 @@ void display_step (void)
 	anim_engaged_step();
 	anim_rotate_step();
 
+	// Increment the step counter.
+	step++;
+
 	if (mode == MODE_NORMAL) {
 		redraw_normal();
+
+		// After Normal mode has been running uninterruptedly for 11
+		// seconds, issue a temperature request and subsequent
+		// temperature response event. Repeat on a 12.8 s interval.
+		if ((step & 0x7F) == 110)
+			event_raise(EVENT_TEMPERATURE_REQUEST);
+
+		if ((step & 0x7F) == 120)
+			event_raise(EVENT_TEMPERATURE_RESPONSE);
+
 		return;
 	}
 
 	// Exit Flash mode after a set number of steps.
-	++step < 10 ? redraw_flash() : display_normal();
+	step < 10 ? redraw_flash() : display_normal();
 }
 
 void display_init (void)
