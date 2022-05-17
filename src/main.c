@@ -24,14 +24,14 @@ static void init (void)
 	switch_init();
 	ht1621_init();
 	drv8833_init();
-	onewire_init();
 
 	display_update();
 }
 
 static void loop (void)
 {
-	bool coarse = true;
+	bool coarse     = true;
+	bool blink_done = false;
 
 	for (;;) {
 
@@ -73,14 +73,23 @@ static void loop (void)
 			display_update();
 		}
 
-		if (event_test_and_clear(EVENT_TEMPERATURE_REQUEST))
-			ds18b20_request_start();
+		if (event_test_and_clear(EVENT_BLINK_DONE)) {
+			onewire_init();
+			blink_done = true;
+		}
 
-		if (event_test_and_clear(EVENT_TEMPERATURE_RESPONSE))
-			ds18b20_response_start();
+		// The OneWire module can only be used after the blink is done,
+		// because both modules use TIM3 internally.
+		if (blink_done) {
+			if (event_test_and_clear(EVENT_TEMPERATURE_REQUEST))
+				ds18b20_request_start();
 
-		// Allow the DS18B20 module to handle internal OneWire events.
-		ds18b20_handle_events();
+			if (event_test_and_clear(EVENT_TEMPERATURE_RESPONSE))
+				ds18b20_response_start();
+
+			// The DS18B20 module handles internal OneWire events.
+			ds18b20_handle_events();
+		}
 
 		// Wait for the next event. This loop is safe against race
 		// conditions from multiple simultaneous events, because unlike
