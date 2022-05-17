@@ -6,9 +6,8 @@ CFLAGS  = -std=c99 -Os -g -flto
 CFLAGS += -funsigned-char -fomit-frame-pointer
 CFLAGS += -Wall -Wextra -Werror
 
-LDFLAGS  = -static -nostartfiles -Os -g -flto
-LDFLAGS += -Wl,-Map=$(PROJECT).map
-LIBNAME  = opencm3_stm32f1
+LDFLAGS = -static -nostartfiles -Os -g -flto
+LIBNAME = opencm3_stm32f1
 
 SRCS = $(wildcard src/*.c)
 OBJS = $(SRCS:.c=.o)
@@ -52,7 +51,7 @@ debug: $(PROJECT).elf
 clean:
 	$(MAKE) -C $(OPENCM3_DIR) clean
 	$(RM) $(OBJS) $(LDSCRIPT)
-	$(RM) $(PROJECT).bin $(PROJECT).elf $(PROJECT).map
+	$(RM) $(PROJECT).bin $(PROJECT).elf
 
 include $(OPENCM3_DIR)/mk/genlink-rules.mk
 include $(OPENCM3_DIR)/mk/gcc-rules.mk
