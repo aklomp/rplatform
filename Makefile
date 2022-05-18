@@ -9,8 +9,13 @@ CFLAGS += -Wall -Wextra -Werror
 LDFLAGS = -static -nostartfiles -Os -g -flto
 LIBNAME = opencm3_stm32f1
 
-SRCS = $(wildcard src/*.c)
-OBJS = $(SRCS:.c=.o)
+# Dynamically generate a file containing the current git commit hash.
+VERFILE = src/version.c
+VERSION = $(shell git rev-parse --short=6 HEAD)
+
+SRCS  = $(filter-out $(VERFILE),$(wildcard src/*.c))
+SRCS += $(VERFILE)
+OBJS  = $(SRCS:.c=.o)
 
 # Default to silent mode, run 'make V=1' for a verbose build.
 ifneq ($(V),1)
@@ -27,6 +32,10 @@ all: $(PROJECT).bin
 
 $(LIBDEPS):
 	$(Q)$(MAKE) -C $(OPENCM3_DIR) TARGETS=stm32/f1 CFLAGS=-flto
+
+$(VERFILE):
+	@printf "  GENVER  $@\n";
+	$(Q)echo "const char version[] = \"$(VERSION)\";" > $@
 
 flash: $(PROJECT).bin
 	@printf "  FLASH   $^\n";
@@ -52,7 +61,7 @@ debug: $(PROJECT).elf
 
 clean:
 	$(Q)$(MAKE) -C $(OPENCM3_DIR) clean
-	$(Q)$(RM) $(OBJS) $(LDSCRIPT)
+	$(Q)$(RM) $(OBJS) $(VERFILE) $(LDSCRIPT)
 	$(Q)$(RM) $(PROJECT).bin $(PROJECT).elf
 
 include $(OPENCM3_DIR)/mk/genlink-rules.mk

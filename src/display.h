@@ -23,7 +23,9 @@ enum DisplayChar {
 	DISPLAY_CHAR_8,
 	DISPLAY_CHAR_9,
 	DISPLAY_CHAR_A,
+	DISPLAY_CHAR_B,
 	DISPLAY_CHAR_C,
+	DISPLAY_CHAR_D,
 	DISPLAY_CHAR_E,
 	DISPLAY_CHAR_F,
 	DISPLAY_CHAR_I,
@@ -58,3 +60,4 @@ extern void display_update (void);
 extern void display_step   (void);
 extern void display_init   (void);
 extern void display_temperature (const int16_t temp);
+extern void display_version (void);
