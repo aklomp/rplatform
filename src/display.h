@@ -60,3 +60,4 @@ extern void display_update (void);
 extern void display_step   (void);
 extern void display_init   (void);
 extern void display_temperature (const int16_t temp);
+extern void display_version (void);

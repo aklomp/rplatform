@@ -9,6 +9,7 @@
 #include "drv8833.h"
 #include "event.h"
 #include "ht1621.h"
+#include "version.h"
 
 // Device bitmaps for segments.
 enum Segment {
@@ -99,7 +100,8 @@ static const uint8_t flash_msg[][6] = {
 static enum {
 	MODE_FLASH,
 	MODE_NORMAL,
-} mode = MODE_NORMAL;
+	MODE_VERSION,
+} mode = MODE_VERSION;
 
 // Normal and Flash display buffers, consisting of character codes.
 static struct {
@@ -182,6 +184,23 @@ void display_flash (const enum DisplayFlash msg)
 	redraw_flash();
 }
 
+void display_version (void)
+{
+	// Go into Version mode.
+	mode = MODE_VERSION;
+	step = 0;
+
+	// Convert the version to display characters.
+	for (uint32_t i = 0; i < sizeof (digit.normal); i++) {
+		const char v = version[i];
+
+		digit.normal[i] = v - ((v >= '0' && v <= '9') ? '0' : 'a' - 10);
+	}
+
+	// Display the version.
+	draw_chars(digit.normal, 0);
+}
+
 void display_update (void)
 {
 	int16_t speed  = drv8833_speed_get();
@@ -215,7 +234,8 @@ void display_step (void)
 	// Increment the step counter.
 	step++;
 
-	if (mode == MODE_NORMAL) {
+	switch (mode) {
+	case MODE_NORMAL:
 		redraw_normal();
 
 		// After Normal mode has been running uninterruptedly for 11
@@ -228,10 +248,20 @@ void display_step (void)
 			event_raise(EVENT_TEMPERATURE_RESPONSE);
 
 		return;
-	}
 
-	// Exit Flash mode after a set number of steps.
-	step < 10 ? redraw_flash() : display_normal();
+	case MODE_FLASH:
+
+		// Exit Flash mode after a set number of steps.
+		step < 10 ? redraw_flash() : display_normal();
+		break;
+
+	case MODE_VERSION:
+
+		// Exit Version mode after a set number of steps.
+		if (step == 8)
+			display_update();
+		break;
+	}
 }
 
 void display_init (void)
@@ -249,6 +279,9 @@ void display_init (void)
 	// Setup the interrupt to trigger an event when the SysTick crosses
 	// through zero.
 	nvic_enable_irq(NVIC_SYSTICK_IRQ);
+
+	// Do not draw anything to the display, because the ht1621 (LCD driver
+	// chip) needs to be initialized first before writes can be performed.
 }
 
 void display_temperature (const int16_t temp)

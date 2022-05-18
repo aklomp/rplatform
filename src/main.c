@@ -25,7 +25,7 @@ static void init (void)
 	ht1621_init();
 	drv8833_init();
 
-	display_update();
+	display_version();
 }
 
 static void loop (void)
