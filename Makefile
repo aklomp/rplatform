@@ -15,6 +15,7 @@ OBJS = $(SRCS:.c=.o)
 # Default to silent mode, run 'make V=1' for a verbose build.
 ifneq ($(V),1)
 Q := @
+MAKEFLAGS += --no-print-directory
 endif
 
 include $(OPENCM3_DIR)/mk/genlink-config.mk
@@ -25,10 +26,11 @@ include $(OPENCM3_DIR)/mk/gcc-config.mk
 all: $(PROJECT).bin
 
 $(LIBDEPS):
-	$(MAKE) -C $(OPENCM3_DIR) TARGETS=stm32/f1 CFLAGS=-flto
+	$(Q)$(MAKE) -C $(OPENCM3_DIR) TARGETS=stm32/f1 CFLAGS=-flto
 
 flash: $(PROJECT).bin
-	openocd \
+	@printf "  FLASH   $^\n";
+	$(Q)openocd \
 	  -f /usr/share/openocd/scripts/interface/stlink.cfg \
 	  -c "transport select hla_swd" \
 	  -f /usr/share/openocd/scripts/target/stm32f1x.cfg \
@@ -49,9 +51,9 @@ debug: $(PROJECT).elf
 	$(GDB) --eval-command="target remote localhost:3333" $(PROJECT).elf
 
 clean:
-	$(MAKE) -C $(OPENCM3_DIR) clean
-	$(RM) $(OBJS) $(LDSCRIPT)
-	$(RM) $(PROJECT).bin $(PROJECT).elf
+	$(Q)$(MAKE) -C $(OPENCM3_DIR) clean
+	$(Q)$(RM) $(OBJS) $(LDSCRIPT)
+	$(Q)$(RM) $(PROJECT).bin $(PROJECT).elf
 
 include $(OPENCM3_DIR)/mk/genlink-rules.mk
 include $(OPENCM3_DIR)/mk/gcc-rules.mk
