@@ -30,6 +30,8 @@ include $(OPENCM3_DIR)/mk/gcc-config.mk
 
 all: $(PROJECT).bin
 
+$(OBJS): $(LIBDEPS)
+
 $(LIBDEPS):
 	$(Q)$(MAKE) -C $(OPENCM3_DIR) TARGETS=stm32/f1 CFLAGS=-flto
 
